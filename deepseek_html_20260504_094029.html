@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Budget Calc">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+    <title>Monthly Budget Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .monthly-total {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .monthly-total h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .monthly-total .amount {
+            font-size: 3em;
+            font-weight: bold;
+        }
+
+        .calendar-container {
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #5568d3;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #calendarDays {
+            display: contents;
+        }
+
+        .day-label {
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+            padding: 10px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .day:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .day.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .day.has-expenses {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .day.selected.has-expenses {
+            background: #667eea;
+        }
+
+        .day.other-month {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .day.today {
+            border-color: #10b981;
+            border-width: 3px;
+        }
+
+        .day-number {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .day-amount {
+            font-size: 0.7em;
+            margin-top: 4px;
+            color: #f59e0b;
+        }
+
+        .day.selected .day-amount {
+            color: #fef3c7;
+        }
+
+        .expense-panel {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f9fafb;
+            border-radius: 15px;
+        }
+
+        .expense-panel.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .expense-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .expense-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .expense-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .expense-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .expense-input input[type="number"] {
+            flex: 0.6;
+        }
+
+        .add-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #059669;
+        }
+
+        .expense-list {
+            margin-top: 20px;
+        }
+
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .expense-item-name {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .expense-item-amount {
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 15px;
+            font-size: 1.1em;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .daily-total {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #667eea;
+        }
+
+        .daily-total h4 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .daily-total .amount {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        /* PWA install banner */
+        .install-banner {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .install-banner.show {
+            display: block;
+        }
+        .install-banner button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .monthly-total .amount {
+                font-size: 2em;
+            }
+
+            .calendar {
+                gap: 5px;
+            }
+
+            .day-number {
+                font-size: 0.9em;
+            }
+
+            .day-amount {
+                font-size: 0.6em;
+            }
+
+            .expense-input {
+                flex-direction: column;
+            }
+
+            .expense-input input[type="number"] {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Monthly Budget Calculator</h1>
+            <p>Track your daily expenses and manage your budget</p>
+        </div>
+
+        <div class="main-card">
+            <div class="monthly-total">
+                <h2>Total Spent This Month</h2>
+                <div class="amount" id="monthlyTotal">₹0.00</div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h3 id="currentMonth"></h3>
+                    <div class="nav-buttons">
+                        <button class="nav-btn" id="prevMonth">← Previous</button>
+                        <button class="nav-btn" id="nextMonth">Next →</button>
+                    </div>
+                </div>
+
+                <div class="calendar">
+                    <div class="day-label">Sun</div>
+                    <div class="day-label">Mon</div>
+                    <div class="day-label">Tue</div>
+                    <div class="day-label">Wed</div>
+                    <div class="day-label">Thu</div>
+                    <div class="day-label">Fri</div>
+                    <div class="day-label">Sat</div>
+                    <div id="calendarDays"></div>
+                </div>
+            </div>
+
+            <div class="expense-panel" id="expensePanel">
+                <h3 id="selectedDateTitle">Add Expense</h3>
+                <div class="expense-input">
+                    <input type="text" id="expenseName" placeholder="Product/Item Name" />
+                    <input type="number" id="expenseAmount" placeholder="Amount (₹)" min="0" step="0.01" />
+                    <button class="add-btn" id="addExpenseBtn">Add</button>
+                </div>
+
+                <div class="expense-list" id="expenseList"></div>
+
+                <div class="daily-total">
+                    <h4>Total for Selected Day</h4>
+                    <div class="amount" id="dailyTotal">₹0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install prompt (optional, for custom banner) -->
+    <div class="install-banner" id="installBanner">
+        <strong>📲 Install this app</strong>
+        <p>Quick access & offline use</p>
+        <button id="installBtn">Add to Home Screen</button>
+    </div>
+
+    <script>
+        // ---------- PWA installation handling ----------
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent automatic prompt
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show custom install banner
+            document.getElementById('installBanner').classList.add('show');
+        });
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                document.getElementById('installBanner').classList.remove('show');
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+            document.getElementById('installBanner').classList.remove('show');
+        });
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        // ---------- Original Budget App Logic ----------
+        let expenses = JSON.parse(localStorage.getItem('budgetExpenses')) || {};
+        let currentDate = new Date();
+        let selectedDate = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalendar();
+            updateMonthlyTotal();
+            
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+                updateMonthlyTotal();
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+                updateMonthlyTotal();
+            });
+
+            document.getElementById('addExpenseBtn').addEventListener('click', addExpense);
+
+            document.getElementById('expenseAmount').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addExpense();
+                }
+            });
+
+            document.getElementById('expenseName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('expenseAmount').focus();
+                }
+            });
+        });
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                              "July", "August", "September", "October", "November", "December"];
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const dayDiv = createDayElement(daysInPrevMonth - i, true);
+                calendarDays.appendChild(dayDiv);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDiv = createDayElement(day, false, dateKey);
+                
+                if (isCurrentMonth && day === today.getDate()) {
+                    dayDiv.classList.add('today');
+                }
+
+                if (expenses[dateKey] && expenses[dateKey].length > 0) {
+                    dayDiv.classList.add('has-expenses');
+                    const total = calculateDailyTotal(dateKey);
+                    const amountSpan = document.createElement('div');
+                    amountSpan.className = 'day-amount';
+                    amountSpan.textContent = `₹${total.toFixed(0)}`;
+                    dayDiv.appendChild(amountSpan);
+                }
+
+                dayDiv.addEventListener('click', (event) => selectDate(dateKey, day, event));
+                calendarDays.appendChild(dayDiv);
+            }
+
+            const totalCells = calendarDays.children.length;
+            const remainingCells = 42 - totalCells;
+            for (let day = 1; day <= remainingCells; day++) {
+                const dayDiv = createDayElement(day, true);
+                calendarDays.appendChild(dayDiv);
+            }
+        }
+
+        function createDayElement(day, isOtherMonth, dateKey = null) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            if (isOtherMonth) dayDiv.classList.add('other-month');
+            
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+            dayDiv.appendChild(dayNumber);
+            
+            return dayDiv;
+        }
+
+        function selectDate(dateKey, day, event) {
+            selectedDate = dateKey;
+            
+            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('selected');
+            }
+
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                              "July", "August", "September", "October", "November", "December"];
+            const [year, month, dayNum] = dateKey.split('-');
+            document.getElementById('selectedDateTitle').textContent = 
+                `Expenses for ${monthNames[parseInt(month) - 1]} ${parseInt(dayNum)}, ${year}`;
+
+            document.getElementById('expensePanel').classList.add('active');
+            renderExpenses();
+            updateDailyTotal();
+        }
+
+        function addExpense() {
+            if (!selectedDate) {
+                alert('Please select a date first!');
+                return;
+            }
+
+            const nameInput = document.getElementById('expenseName');
+            const amountInput = document.getElementById('expenseAmount');
+            
+            const name = nameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            if (!name || !amount || amount <= 0) {
+                alert('Please enter both product name and valid amount!');
+                return;
+            }
+
+            if (!expenses[selectedDate]) {
+                expenses[selectedDate] = [];
+            }
+
+            expenses[selectedDate].push({
+                id: Date.now(),
+                name: name,
+                amount: amount
+            });
+
+            saveExpenses();
+            nameInput.value = '';
+            amountInput.value = '';
+            nameInput.focus();
+
+            renderExpenses();
+            updateDailyTotal();
+            updateMonthlyTotal();
+            renderCalendar();
+        }
+
+        function deleteExpense(dateKey, expenseId) {
+            expenses[dateKey] = expenses[dateKey].filter(e => e.id !== expenseId);
+            if (expenses[dateKey].length === 0) {
+                delete expenses[dateKey];
+            }
+            saveExpenses();
+            renderExpenses();
+            updateDailyTotal();
+            updateMonthlyTotal();
+            renderCalendar();
+        }
+
+        function renderExpenses() {
+            const expenseList = document.getElementById('expenseList');
+            
+            if (!expenses[selectedDate] || expenses[selectedDate].length === 0) {
+                expenseList.innerHTML = '<div class="empty-state">No expenses for this day yet</div>';
+                return;
+            }
+
+            expenseList.innerHTML = expenses[selectedDate].map(expense => `
+                <div class="expense-item">
+                    <div class="expense-item-name">${expense.name}</div>
+                    <div class="expense-item-amount">₹${expense.amount.toFixed(2)}</div>
+                    <button class="delete-btn" onclick="deleteExpense('${selectedDate}', ${expense.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function calculateDailyTotal(dateKey) {
+            if (!expenses[dateKey]) return 0;
+            return expenses[dateKey].reduce((sum, expense) => sum + expense.amount, 0);
+        }
+
+        function updateDailyTotal() {
+            const total = calculateDailyTotal(selectedDate);
+            document.getElementById('dailyTotal').textContent = `₹${total.toFixed(2)}`;
+        }
+
+        function updateMonthlyTotal() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+
+            let total = 0;
+            Object.keys(expenses).forEach(dateKey => {
+                if (dateKey.startsWith(monthKey)) {
+                    total += calculateDailyTotal(dateKey);
+                }
+            });
+
+            document.getElementById('monthlyTotal').textContent = `₹${total.toFixed(2)}`;
+        }
+
+        function saveExpenses() {
+            localStorage.setItem('budgetExpenses', JSON.stringify(expenses));
+        }
+    </script>
+</body>
+</html>

@@ -790,6 +790,13 @@
         });
 
         function loadProfiles() {
+            if (!currentUser) {
+                profiles = [];
+                activeProfileId = null;
+                expenses = {};
+                return;
+            }
+
             const savedProfiles = safeParseJSON(localStorage.getItem(PROFILE_STORAGE_KEY));
             const legacyExpenses = safeParseJSON(localStorage.getItem(LEGACY_EXPENSES_STORAGE_KEY)) || {};
 
@@ -871,7 +878,16 @@
                         updateCloudStatus(`Cloud sync active for ${user.email}. Loading saved profiles...`);
                         await loadCloudProfiles();
                     } else {
-                        updateCloudStatus('Logged out. Changes are saved on this device until you log in.');
+                        updateCloudStatus('Logged out. Please log in to access profiles.');
+                        // Clear profiles when logged out
+                        profiles = [];
+                        activeProfileId = null;
+                        expenses = {};
+                        localStorage.removeItem(PROFILE_STORAGE_KEY);
+                        localStorage.removeItem(ACTIVE_PROFILE_STORAGE_KEY);
+                        renderProfileControls();
+                        renderCalendar();
+                        updateMonthlyTotal();
                     }
                 });
             } catch (error) {
@@ -992,8 +1008,15 @@
                 `<option value="${profile.id}" ${profile.id === activeProfileId ? 'selected' : ''}>${escapeHTML(profile.name)}</option>`
             )).join('');
 
-            document.getElementById('profileStatus').textContent =
-                `${activeProfile.name} is active. ${totalExpenses} saved expense${totalExpenses === 1 ? '' : 's'}.`;
+            const createBtn = document.getElementById('createProfileBtn');
+            if (!currentUser) {
+                createBtn.disabled = true;
+                document.getElementById('profileStatus').textContent = 'Log in to create and manage profiles.';
+            } else {
+                createBtn.disabled = false;
+                document.getElementById('profileStatus').textContent =
+                    `${activeProfile.name} is active. ${totalExpenses} saved expense${totalExpenses === 1 ? '' : 's'}.`;
+            }
             document.getElementById('deleteProfileBtn').disabled = profiles.length === 1;
         }
 
@@ -1015,6 +1038,11 @@
         }
 
         function createProfile() {
+            if (!currentUser) {
+                alert('Please log in to create profiles.');
+                return;
+            }
+
             const nameInput = document.getElementById('profileName');
             const profileName = nameInput.value.trim();
 

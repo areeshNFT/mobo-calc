@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Budget Calc">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+    <title>Monthly Budget Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .profile-panel {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: end;
+            padding: 20px;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .profile-fields {
+            display: grid;
+            grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.4fr);
+            gap: 12px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-group label {
+            color: #4b5563;
+            font-size: 0.9em;
+            font-weight: 700;
+        }
+
+        .profile-panel select,
+        .profile-panel input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            transition: border-color 0.3s;
+        }
+
+        .profile-panel select:focus,
+        .profile-panel input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .profile-btn {
+            border: none;
+            padding: 11px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            color: white;
+            transition: background 0.3s;
+        }
+
+        .create-profile-btn {
+            background: #667eea;
+        }
+
+        .create-profile-btn:hover {
+            background: #5568d3;
+        }
+
+        .delete-profile-btn {
+            background: #ef4444;
+        }
+
+        .delete-profile-btn:hover {
+            background: #dc2626;
+        }
+
+        .profile-status {
+            grid-column: 1 / -1;
+            color: #6b7280;
+            font-size: 0.95em;
+        }
+
+        .cloud-auth {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+            gap: 12px;
+            align-items: end;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .cloud-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .cloud-btn {
+            border: none;
+            padding: 11px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            color: white;
+            background: #0f766e;
+            transition: background 0.3s;
+        }
+
+        .cloud-btn:hover {
+            background: #0d5f59;
+        }
+
+        .cloud-btn.secondary {
+            background: #4b5563;
+        }
+
+        .cloud-btn.secondary:hover {
+            background: #374151;
+        }
+
+        .cloud-status {
+            grid-column: 1 / -1;
+            color: #4b5563;
+            font-size: 0.95em;
+        }
+
+        .monthly-total {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .monthly-total h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .monthly-total .amount {
+            font-size: 3em;
+            font-weight: bold;
+        }
+
+        .calendar-container {
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #5568d3;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #calendarDays {
+            display: contents;
+        }
+
+        .day-label {
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+            padding: 10px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .day:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .day.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .day.has-expenses {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .day.selected.has-expenses {
+            background: #667eea;
+        }
+
+        .day.other-month {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .day.today {
+            border-color: #10b981;
+            border-width: 3px;
+        }
+
+        .day-number {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .day-amount {
+            font-size: 0.7em;
+            margin-top: 4px;
+            color: #f59e0b;
+        }
+
+        .day.selected .day-amount {
+            color: #fef3c7;
+        }
+
+        .expense-panel {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f9fafb;
+            border-radius: 15px;
+        }
+
+        .expense-panel.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .expense-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .expense-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .expense-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .expense-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .expense-input input[type="number"] {
+            flex: 0.6;
+        }
+
+        .add-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #059669;
+        }
+
+        .expense-list {
+            margin-top: 20px;
+        }
+
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .expense-item-name {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .expense-item-amount {
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 15px;
+            font-size: 1.1em;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .daily-total {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #667eea;
+        }
+
+        .daily-total h4 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .daily-total .amount {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        /* PWA install banner */
+        .install-banner {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .install-banner.show {
+            display: block;
+        }
+        .install-banner button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .profile-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .cloud-auth {
+                grid-template-columns: 1fr;
+            }
+
+            .cloud-actions {
+                justify-content: stretch;
+            }
+
+            .cloud-btn {
+                flex: 1;
+            }
+
+            .profile-actions {
+                justify-content: stretch;
+            }
+
+            .profile-btn {
+                flex: 1;
+            }
+
+            .monthly-total .amount {
+                font-size: 2em;
+            }
+
+            .calendar {
+                gap: 5px;
+            }
+
+            .day-number {
+                font-size: 0.9em;
+            }
+
+            .day-amount {
+                font-size: 0.6em;
+            }
+
+            .expense-input {
+                flex-direction: column;
+            }
+
+            .expense-input input[type="number"] {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Monthly Budget Calculator</h1>
+            <p>Track your daily expenses and manage your budget</p>
+        </div>
+
+        <div class="main-card">
+            <div class="profile-panel">
+                <div class="cloud-auth">
+                    <div class="field-group">
+                        <label for="authEmail">Email</label>
+                        <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" />
+                    </div>
+                    <div class="field-group">
+                        <label for="authPassword">Password</label>
+                        <input type="password" id="authPassword" placeholder="At least 6 characters" autocomplete="current-password" />
+                    </div>
+                    <div class="cloud-actions">
+                        <button class="cloud-btn" id="signInBtn">Log In</button>
+                        <button class="cloud-btn secondary" id="signUpBtn">Sign Up</button>
+                        <button class="cloud-btn secondary" id="signOutBtn" hidden>Log Out</button>
+                    </div>
+                    <div class="cloud-status" id="cloudStatus">Cloud sync is not configured yet. Profiles are saved on this device.</div>
+                </div>
+                <div class="profile-fields">
+                    <div class="field-group">
+                        <label for="profileSelect">Profile</label>
+                        <select id="profileSelect"></select>
+                    </div>
+                    <div class="field-group">
+                        <label for="profileName">New profile name</label>
+                        <input type="text" id="profileName" placeholder="Example: Personal, Family, Work" />
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="profile-btn create-profile-btn" id="createProfileBtn">Create Profile</button>
+                    <button class="profile-btn delete-profile-btn" id="deleteProfileBtn">Delete Profile</button>
+                </div>
+                <div class="profile-status" id="profileStatus"></div>
+            </div>
+
+            <div class="monthly-total">
+                <h2>Total Spent This Month</h2>
+                <div class="amount" id="monthlyTotal">₹0.00</div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h3 id="currentMonth"></h3>
+                    <div class="nav-buttons">
+                        <button class="nav-btn" id="prevMonth">← Previous</button>
+                        <button class="nav-btn" id="nextMonth">Next →</button>
+                    </div>
+                </div>
+
+                <div class="calendar">
+                    <div class="day-label">Sun</div>
+                    <div class="day-label">Mon</div>
+                    <div class="day-label">Tue</div>
+                    <div class="day-label">Wed</div>
+                    <div class="day-label">Thu</div>
+                    <div class="day-label">Fri</div>
+                    <div class="day-label">Sat</div>
+                    <div id="calendarDays"></div>
+                </div>
+            </div>
+
+            <div class="expense-panel" id="expensePanel">
+                <h3 id="selectedDateTitle">Add Expense</h3>
+                <div class="expense-input">
+                    <input type="text" id="expenseName" placeholder="Product/Item Name" />
+                    <input type="number" id="expenseAmount" placeholder="Amount (₹)" min="0" step="0.01" />
+                    <button class="add-btn" id="addExpenseBtn">Add</button>
+                </div>
+
+                <div class="expense-list" id="expenseList"></div>
+
+                <div class="daily-total">
+                    <h4>Total for Selected Day</h4>
+                    <div class="amount" id="dailyTotal">₹0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install prompt (optional, for custom banner) -->
+    <div class="install-banner" id="installBanner">
+        <strong>📲 Install this app</strong>
+        <p>Quick access & offline use</p>
+        <button id="installBtn">Add to Home Screen</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged
+        } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+        // ---------- PWA installation handling ----------
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent automatic prompt
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show custom install banner
+            document.getElementById('installBanner').classList.add('show');
+        });
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                document.getElementById('installBanner').classList.remove('show');
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+            document.getElementById('installBanner').classList.remove('show');
+        });
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        // ---------- Original Budget App Logic ----------
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDRys_TdtGttRLkKGNArYFQpgxOepqsIOE",
+            authDomain: "budget-calc-19084.firebaseapp.com",
+            databaseURL: "https://budget-calc-19084-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "budget-calc-19084",
+            storageBucket: "budget-calc-19084.firebasestorage.app",
+            messagingSenderId: "327879725925",
+            appId: "1:327879725925:web:a6d8460ddf65ead242c78c",
+            measurementId: "G-EBEVR1DE29"
+        };
+  
+        let profiles = [];
+        let activeProfileId = null;
+        let expenses = {};
+        let currentDate = new Date();
+        let selectedDate = null;
+        let firebaseApp = null;
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let cloudSyncReady = false;
+        let loadingCloudData = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfiles();
+            renderProfileControls();
+            initializeCloudSync();
+            renderCalendar();
+            updateMonthlyTotal();
+
+            document.getElementById('profileSelect').addEventListener('change', switchProfile);
+            document.getElementById('createProfileBtn').addEventListener('click', createProfile);
+            document.getElementById('deleteProfileBtn').addEventListener('click', deleteActiveProfile);
+            document.getElementById('signInBtn').addEventListener('click', signInToCloud);
+            document.getElementById('signUpBtn').addEventListener('click', signUpForCloud);
+            document.getElementById('signOutBtn').addEventListener('click', signOutOfCloud);
+
+            document.getElementById('profileName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    createProfile();
+                }
+            });
+            
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+                updateMonthlyTotal();
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+                updateMonthlyTotal();
+            });
+
+            document.getElementById('addExpenseBtn').addEventListener('click', addExpense);
+
+            document.getElementById('expenseAmount').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addExpense();
+                }
+            });
+
+            document.getElementById('expenseName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('expenseAmount').focus();
+                }
+            });
+        });
+
+        function loadProfiles() {
+            const savedProfiles = safeParseJSON(localStorage.getItem(PROFILE_STORAGE_KEY));
+            const legacyExpenses = safeParseJSON(localStorage.getItem(LEGACY_EXPENSES_STORAGE_KEY)) || {};
+
+            if (Array.isArray(savedProfiles) && savedProfiles.length > 0) {
+                profiles = savedProfiles;
+            } else {
+                profiles = [{
+                    id: createProfileId(),
+                    name: 'My Profile',
+                    createdAt: new Date().toISOString(),
+                    expenses: legacyExpenses
+                }];
+                saveProfiles();
+            }
+
+            const savedActiveProfileId = localStorage.getItem(ACTIVE_PROFILE_STORAGE_KEY);
+            activeProfileId = profiles.some(profile => profile.id === savedActiveProfileId)
+                ? savedActiveProfileId
+                : profiles[0].id;
+            expenses = getActiveProfile().expenses || {};
+            localStorage.setItem(ACTIVE_PROFILE_STORAGE_KEY, activeProfileId);
+        }
+
+        function safeParseJSON(value) {
+            if (!value) return null;
+            try {
+                return JSON.parse(value);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function createProfileId() {
+            return `profile-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+
+        function getActiveProfile() {
+            return profiles.find(profile => profile.id === activeProfileId) || profiles[0];
+        }
+
+        function saveProfiles() {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+            if (cloudSyncReady && currentUser && !loadingCloudData) {
+                saveCloudProfiles().catch(error => {
+                    updateCloudStatus(`Cloud save failed: ${error.message}`);
+                });
+            }
+        }
+
+        function isFirebaseConfigured() {
+            return FIREBASE_CONFIG.apiKey !== 'PASTE_FIREBASE_API_KEY'
+                && FIREBASE_CONFIG.projectId !== 'PASTE_FIREBASE_PROJECT_ID'
+                && FIREBASE_CONFIG.appId !== 'PASTE_FIREBASE_APP_ID';
+        }
+
+        function initializeCloudSync() {
+            if (!isFirebaseConfigured()) {
+                setCloudButtons(false);
+                updateCloudStatus('Cloud sync is waiting for Firebase config. Profiles are saved on this device for now.');
+                return;
+            }
+
+            try {
+                firebaseApp = initializeApp(FIREBASE_CONFIG);
+                auth = getAuth(firebaseApp);
+                db = getFirestore(firebaseApp);
+                cloudSyncReady = true;
+                setCloudButtons(false);
+                updateCloudStatus('Log in or sign up to save profiles in the cloud.');
+
+                onAuthStateChanged(auth, async (user) => {
+                    currentUser = user;
+                    setCloudButtons(Boolean(user));
+
+                    if (user) {
+                        updateCloudStatus(`Cloud sync active for ${user.email}. Loading saved profiles...`);
+                        await loadCloudProfiles();
+                    } else {
+                        updateCloudStatus('Logged out. Changes are saved on this device until you log in.');
+                    }
+                });
+            } catch (error) {
+                cloudSyncReady = false;
+                setCloudButtons(false);
+                updateCloudStatus(`Cloud sync could not start: ${error.message}`);
+            }
+        }
+
+        function setCloudButtons(isSignedIn) {
+            document.getElementById('signInBtn').hidden = isSignedIn;
+            document.getElementById('signUpBtn').hidden = isSignedIn;
+            document.getElementById('signOutBtn').hidden = !isSignedIn;
+            document.getElementById('authEmail').disabled = !cloudSyncReady || isSignedIn;
+            document.getElementById('authPassword').disabled = !cloudSyncReady || isSignedIn;
+            document.getElementById('signInBtn').disabled = !cloudSyncReady;
+            document.getElementById('signUpBtn').disabled = !cloudSyncReady;
+        }
+
+        function updateCloudStatus(message) {
+            document.getElementById('cloudStatus').textContent = message;
+        }
+
+        function getAuthCredentials() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                alert('Please enter your email and password.');
+                return null;
+            }
+
+            return { email, password };
+        }
+
+        async function signUpForCloud() {
+            const credentials = getAuthCredentials();
+            if (!credentials || !auth) return;
+
+            try {
+                await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+            } catch (error) {
+                alert(`Sign up failed: ${error.message}`);
+            }
+        }
+
+        async function signInToCloud() {
+            const credentials = getAuthCredentials();
+            if (!credentials || !auth) return;
+
+            try {
+                await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+            } catch (error) {
+                alert(`Log in failed: ${error.message}`);
+            }
+        }
+
+        async function signOutOfCloud() {
+            if (!auth) return;
+            await signOut(auth);
+        }
+
+        function getCloudProfileDocRef() {
+            return doc(db, 'budgetUsers', currentUser.uid);
+        }
+
+        async function loadCloudProfiles() {
+            if (!currentUser || !db) return;
+
+            loadingCloudData = true;
+            try {
+                const snapshot = await getDoc(getCloudProfileDocRef());
+
+                if (snapshot.exists()) {
+                    const cloudData = snapshot.data();
+                    if (Array.isArray(cloudData.profiles) && cloudData.profiles.length > 0) {
+                        profiles = cloudData.profiles;
+                        activeProfileId = profiles.some(profile => profile.id === cloudData.activeProfileId)
+                            ? cloudData.activeProfileId
+                            : profiles[0].id;
+                        expenses = getActiveProfile().expenses || {};
+                        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+                        localStorage.setItem(ACTIVE_PROFILE_STORAGE_KEY, activeProfileId);
+                    }
+                } else {
+                    await saveCloudProfiles();
+                }
+
+                selectedDate = null;
+                document.getElementById('expensePanel').classList.remove('active');
+                renderProfileControls();
+                renderCalendar();
+                updateMonthlyTotal();
+                updateCloudStatus(`Cloud sync active for ${currentUser.email}.`);
+            } catch (error) {
+                updateCloudStatus(`Cloud load failed: ${error.message}`);
+            } finally {
+                loadingCloudData = false;
+            }
+        }
+
+        async function saveCloudProfiles() {
+            if (!currentUser || !db) return;
+
+            await setDoc(getCloudProfileDocRef(), {
+                profiles,
+                activeProfileId,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        }
+
+        function renderProfileControls() {
+            const profileSelect = document.getElementById('profileSelect');
+            const activeProfile = getActiveProfile();
+            const totalExpenses = Object.values(expenses).reduce((sum, dayExpenses) => sum + dayExpenses.length, 0);
+
+            profileSelect.innerHTML = profiles.map(profile => (
+                `<option value="${profile.id}" ${profile.id === activeProfileId ? 'selected' : ''}>${escapeHTML(profile.name)}</option>`
+            )).join('');
+
+            document.getElementById('profileStatus').textContent =
+                `${activeProfile.name} is active. ${totalExpenses} saved expense${totalExpenses === 1 ? '' : 's'}.`;
+            document.getElementById('deleteProfileBtn').disabled = profiles.length === 1;
+        }
+
+        function switchProfile() {
+            const nextProfileId = document.getElementById('profileSelect').value;
+            const nextProfile = profiles.find(profile => profile.id === nextProfileId);
+            if (!nextProfile) return;
+
+            activeProfileId = nextProfile.id;
+            localStorage.setItem(ACTIVE_PROFILE_STORAGE_KEY, activeProfileId);
+            expenses = nextProfile.expenses || {};
+            selectedDate = null;
+            document.getElementById('expensePanel').classList.remove('active');
+            saveProfiles();
+
+            renderProfileControls();
+            renderCalendar();
+            updateMonthlyTotal();
+        }
+
+        function createProfile() {
+            const nameInput = document.getElementById('profileName');
+            const profileName = nameInput.value.trim();
+
+            if (!profileName) {
+                alert('Please enter a profile name.');
+                return;
+            }
+
+            if (profiles.some(profile => profile.name.toLowerCase() === profileName.toLowerCase())) {
+                alert('A profile with this name already exists.');
+                return;
+            }
+
+            const profile = {
+                id: createProfileId(),
+                name: profileName,
+                createdAt: new Date().toISOString(),
+                expenses: {}
+            };
+
+            profiles.push(profile);
+            activeProfileId = profile.id;
+            expenses = profile.expenses;
+            localStorage.setItem(ACTIVE_PROFILE_STORAGE_KEY, activeProfileId);
+            saveProfiles();
+
+            nameInput.value = '';
+            selectedDate = null;
+            document.getElementById('expensePanel').classList.remove('active');
+            renderProfileControls();
+            renderCalendar();
+            updateMonthlyTotal();
+        }
+
+        function deleteActiveProfile() {
+            if (profiles.length === 1) {
+                alert('You need at least one profile.');
+                return;
+            }
+
+            const activeProfile = getActiveProfile();
+            const confirmed = confirm(`Delete ${activeProfile.name} and all saved expenses for this profile?`);
+            if (!confirmed) return;
+
+            profiles = profiles.filter(profile => profile.id !== activeProfileId);
+            activeProfileId = profiles[0].id;
+            expenses = profiles[0].expenses || {};
+            localStorage.setItem(ACTIVE_PROFILE_STORAGE_KEY, activeProfileId);
+            saveProfiles();
+
+            selectedDate = null;
+            document.getElementById('expensePanel').classList.remove('active');
+            renderProfileControls();
+            renderCalendar();
+            updateMonthlyTotal();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                              "July", "August", "September", "October", "November", "December"];
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const dayDiv = createDayElement(daysInPrevMonth - i, true);
+                calendarDays.appendChild(dayDiv);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDiv = createDayElement(day, false, dateKey);
+                
+                if (isCurrentMonth && day === today.getDate()) {
+                    dayDiv.classList.add('today');
+                }
+
+                if (expenses[dateKey] && expenses[dateKey].length > 0) {
+                    dayDiv.classList.add('has-expenses');
+                    const total = calculateDailyTotal(dateKey);
+                    const amountSpan = document.createElement('div');
+                    amountSpan.className = 'day-amount';
+                    amountSpan.textContent = `₹${total.toFixed(0)}`;
+                    dayDiv.appendChild(amountSpan);
+                }
+
+                dayDiv.addEventListener('click', (event) => selectDate(dateKey, day, event));
+                calendarDays.appendChild(dayDiv);
+            }
+
+            const totalCells = calendarDays.children.length;
+            const remainingCells = 42 - totalCells;
+            for (let day = 1; day <= remainingCells; day++) {
+                const dayDiv = createDayElement(day, true);
+                calendarDays.appendChild(dayDiv);
+            }
+        }
+
+        function createDayElement(day, isOtherMonth, dateKey = null) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            if (isOtherMonth) dayDiv.classList.add('other-month');
+            
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+            dayDiv.appendChild(dayNumber);
+            
+            return dayDiv;
+        }
+
+        function selectDate(dateKey, day, event) {
+            selectedDate = dateKey;
+            
+            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('selected');
+            }
+
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                              "July", "August", "September", "October", "November", "December"];
+            const [year, month, dayNum] = dateKey.split('-');
+            document.getElementById('selectedDateTitle').textContent = 
+                `Expenses for ${monthNames[parseInt(month) - 1]} ${parseInt(dayNum)}, ${year}`;
+
+            document.getElementById('expensePanel').classList.add('active');
+            renderExpenses();
+            updateDailyTotal();
+        }
+
+        function addExpense() {
+            if (!selectedDate) {
+                alert('Please select a date first!');
+                return;
+            }
+
+            const nameInput = document.getElementById('expenseName');
+            const amountInput = document.getElementById('expenseAmount');
+            
+            const name = nameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            if (!name || !amount || amount <= 0) {
+                alert('Please enter both product name and valid amount!');
+                return;
+            }
+
+            if (!expenses[selectedDate]) {
+                expenses[selectedDate] = [];
+            }
+
+            expenses[selectedDate].push({
+                id: Date.now(),
+                name: name,
+                amount: amount
+            });
+
+            saveExpenses();
+            nameInput.value = '';
+            amountInput.value = '';
+            nameInput.focus();
+
+            renderExpenses();
+            updateDailyTotal();
+            updateMonthlyTotal();
+            renderCalendar();
+        }
+
+        function deleteExpense(dateKey, expenseId) {
+            expenses[dateKey] = expenses[dateKey].filter(e => e.id !== expenseId);
+            if (expenses[dateKey].length === 0) {
+                delete expenses[dateKey];
+            }
+            saveExpenses();
+            renderExpenses();
+            updateDailyTotal();
+            updateMonthlyTotal();
+            renderCalendar();
+        }
+
+        function renderExpenses() {
+            const expenseList = document.getElementById('expenseList');
+            
+            if (!expenses[selectedDate] || expenses[selectedDate].length === 0) {
+                expenseList.innerHTML = '<div class="empty-state">No expenses for this day yet</div>';
+                return;
+            }
+
+            expenseList.innerHTML = expenses[selectedDate].map(expense => `
+                <div class="expense-item">
+                    <div class="expense-item-name">${escapeHTML(expense.name)}</div>
+                    <div class="expense-item-amount">₹${expense.amount.toFixed(2)}</div>
+                    <button class="delete-btn" onclick="deleteExpense('${selectedDate}', ${expense.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function calculateDailyTotal(dateKey) {
+            if (!expenses[dateKey]) return 0;
+            return expenses[dateKey].reduce((sum, expense) => sum + expense.amount, 0);
+        }
+
+        function updateDailyTotal() {
+            const total = calculateDailyTotal(selectedDate);
+            document.getElementById('dailyTotal').textContent = `₹${total.toFixed(2)}`;
+        }
+
+        function updateMonthlyTotal() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+
+            let total = 0;
+            Object.keys(expenses).forEach(dateKey => {
+                if (dateKey.startsWith(monthKey)) {
+                    total += calculateDailyTotal(dateKey);
+                }
+            });
+
+            document.getElementById('monthlyTotal').textContent = `₹${total.toFixed(2)}`;
+        }
+
+        function saveExpenses() {
+            const activeProfile = getActiveProfile();
+            activeProfile.expenses = expenses;
+            saveProfiles();
+            localStorage.setItem(LEGACY_EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
+            renderProfileControls();
+        }
+
+        function escapeHTML(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        window.deleteExpense = deleteExpense;
+    </script>
+</body>
+</html>

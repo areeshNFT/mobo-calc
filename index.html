@@ -1010,6 +1010,15 @@
             const activeProfile = getActiveProfile();
             const totalExpenses = Object.values(expenses).reduce((sum, dayExpenses) => sum + dayExpenses.length, 0);
 
+            if (!activeProfile) {
+                profileSelect.innerHTML = '';
+                document.getElementById('monthlyBudget').value = 0;
+                document.getElementById('profileStatus').textContent = 'Log in to access profiles.';
+                document.getElementById('createProfileBtn').disabled = true;
+                document.getElementById('deleteProfileBtn').disabled = true;
+                return;
+            }
+
             profileSelect.innerHTML = profiles.map(profile => (
                 `<option value="${profile.id}" ${profile.id === activeProfileId ? 'selected' : ''}>${escapeHTML(profile.name)}</option>`
             )).join('');
@@ -1289,12 +1298,16 @@
             monthlyTotalElement.textContent = `₹${total.toFixed(2)}`;
 
             const activeProfile = getActiveProfile();
-            const budget = activeProfile.monthlyBudget || 0;
-            if (budget > 0) {
-                if (total > budget) {
-                    monthlyTotalElement.style.color = 'red';
+            if (activeProfile) {
+                const budget = activeProfile.monthlyBudget || 0;
+                if (budget > 0) {
+                    if (total > budget) {
+                        monthlyTotalElement.style.color = 'red';
+                    } else {
+                        monthlyTotalElement.style.color = 'green';
+                    }
                 } else {
-                    monthlyTotalElement.style.color = 'green';
+                    monthlyTotalElement.style.color = ''; // default
                 }
             } else {
                 monthlyTotalElement.style.color = ''; // default
@@ -1305,6 +1318,7 @@
             const budgetInput = document.getElementById('monthlyBudget');
             const budget = parseFloat(budgetInput.value) || 0;
             const activeProfile = getActiveProfile();
+            if (!activeProfile) return;
             activeProfile.monthlyBudget = budget;
             saveProfiles();
             updateMonthlyTotal();

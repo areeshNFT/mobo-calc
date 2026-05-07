@@ -580,6 +580,10 @@
                         <select id="profileSelect"></select>
                     </div>
                     <div class="field-group">
+                        <label for="monthlyBudget">Monthly Budget (₹)</label>
+                        <input type="number" id="monthlyBudget" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                    <div class="field-group">
                         <label for="profileName">New profile name</label>
                         <input type="text" id="profileName" placeholder="Example: Personal, Family, Work" />
                     </div>
@@ -755,6 +759,8 @@
             document.getElementById('signInBtn').addEventListener('click', signInToCloud);
             document.getElementById('signUpBtn').addEventListener('click', signUpForCloud);
             document.getElementById('signOutBtn').addEventListener('click', signOutOfCloud);
+
+            document.getElementById('monthlyBudget').addEventListener('input', updateMonthlyBudget);
 
             document.getElementById('profileName').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -1008,12 +1014,17 @@
                 `<option value="${profile.id}" ${profile.id === activeProfileId ? 'selected' : ''}>${escapeHTML(profile.name)}</option>`
             )).join('');
 
+            const budgetInput = document.getElementById('monthlyBudget');
+            budgetInput.value = activeProfile.monthlyBudget || 0;
+
             const createBtn = document.getElementById('createProfileBtn');
             if (!currentUser) {
                 createBtn.disabled = true;
+                budgetInput.disabled = true;
                 document.getElementById('profileStatus').textContent = 'Log in to create and manage profiles.';
             } else {
                 createBtn.disabled = false;
+                budgetInput.disabled = false;
                 document.getElementById('profileStatus').textContent =
                     `${activeProfile.name} is active. ${totalExpenses} saved expense${totalExpenses === 1 ? '' : 's'}.`;
             }
@@ -1060,6 +1071,7 @@
                 id: createProfileId(),
                 name: profileName,
                 createdAt: new Date().toISOString(),
+                monthlyBudget: 0,
                 expenses: {}
             };
 
@@ -1273,7 +1285,29 @@
                 }
             });
 
-            document.getElementById('monthlyTotal').textContent = `₹${total.toFixed(2)}`;
+            const monthlyTotalElement = document.getElementById('monthlyTotal');
+            monthlyTotalElement.textContent = `₹${total.toFixed(2)}`;
+
+            const activeProfile = getActiveProfile();
+            const budget = activeProfile.monthlyBudget || 0;
+            if (budget > 0) {
+                if (total > budget) {
+                    monthlyTotalElement.style.color = 'red';
+                } else {
+                    monthlyTotalElement.style.color = 'green';
+                }
+            } else {
+                monthlyTotalElement.style.color = ''; // default
+            }
+        }
+
+        function updateMonthlyBudget() {
+            const budgetInput = document.getElementById('monthlyBudget');
+            const budget = parseFloat(budgetInput.value) || 0;
+            const activeProfile = getActiveProfile();
+            activeProfile.monthlyBudget = budget;
+            saveProfiles();
+            updateMonthlyTotal();
         }
 
         function saveExpenses() {

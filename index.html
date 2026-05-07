@@ -701,7 +701,11 @@
             appId: "1:327879725925:web:a6d8460ddf65ead242c78c",
             measurementId: "G-EBEVR1DE29"
         };
-  
+
+        const PROFILE_STORAGE_KEY = 'budgetCalcProfiles';
+        const ACTIVE_PROFILE_STORAGE_KEY = 'budgetCalcActiveProfileId';
+        const LEGACY_EXPENSES_STORAGE_KEY = 'budgetCalcLegacyExpenses';
+
         let profiles = [];
         let activeProfileId = null;
         let expenses = {};

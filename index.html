@@ -249,7 +249,10 @@
         }
 
         #calendarDays {
-            display: contents;
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: inherit;
         }
 
         .day-label {
@@ -640,21 +643,42 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-        import {
-            getAuth,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            signOut,
-            onAuthStateChanged
-        } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-        import {
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc,
-            serverTimestamp
-        } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+        let initializeApp;
+        let getAuth;
+        let createUserWithEmailAndPassword;
+        let signInWithEmailAndPassword;
+        let signOut;
+        let onAuthStateChanged;
+        let getFirestore;
+        let doc;
+        let getDoc;
+        let setDoc;
+        let serverTimestamp;
+        let firebaseModulesPromise = null;
+
+        async function loadFirebaseModules() {
+            if (!firebaseModulesPromise) {
+                firebaseModulesPromise = Promise.all([
+                    import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js'),
+                    import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js'),
+                    import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js')
+                ]).then(([appModule, authModule, firestoreModule]) => {
+                    initializeApp = appModule.initializeApp;
+                    getAuth = authModule.getAuth;
+                    createUserWithEmailAndPassword = authModule.createUserWithEmailAndPassword;
+                    signInWithEmailAndPassword = authModule.signInWithEmailAndPassword;
+                    signOut = authModule.signOut;
+                    onAuthStateChanged = authModule.onAuthStateChanged;
+                    getFirestore = firestoreModule.getFirestore;
+                    doc = firestoreModule.doc;
+                    getDoc = firestoreModule.getDoc;
+                    setDoc = firestoreModule.setDoc;
+                    serverTimestamp = firestoreModule.serverTimestamp;
+                });
+            }
+
+            return firebaseModulesPromise;
+        }
 
         // ---------- PWA installation handling ----------
         let deferredPrompt;
@@ -821,7 +845,7 @@
                 && FIREBASE_CONFIG.appId !== 'PASTE_FIREBASE_APP_ID';
         }
 
-        function initializeCloudSync() {
+        async function initializeCloudSync() {
             if (!isFirebaseConfigured()) {
                 setCloudButtons(false);
                 updateCloudStatus('Cloud sync is waiting for Firebase config. Profiles are saved on this device for now.');
@@ -829,6 +853,9 @@
             }
 
             try {
+                setCloudButtons(false);
+                updateCloudStatus('Starting cloud sync. Profiles are available locally while cloud sync loads.');
+                await loadFirebaseModules();
                 firebaseApp = initializeApp(FIREBASE_CONFIG);
                 auth = getAuth(firebaseApp);
                 db = getFirestore(firebaseApp);

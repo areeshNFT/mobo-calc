@@ -598,6 +598,8 @@
             <div class="monthly-total">
                 <h2>Total Spent This Month</h2>
                 <div class="amount" id="monthlyTotal">₹0.00</div>
+                <h3>Saved This Month</h3>
+                <div class="amount" id="monthlySaved">₹0.00</div>
             </div>
 
             <div class="calendar-container">
@@ -1297,20 +1299,29 @@
             const monthlyTotalElement = document.getElementById('monthlyTotal');
             monthlyTotalElement.textContent = `₹${total.toFixed(2)}`;
 
+            const monthlySavedElement = document.getElementById('monthlySaved');
             const activeProfile = getActiveProfile();
             if (activeProfile) {
                 const budget = activeProfile.monthlyBudget || 0;
+                const saved = budget - total;
+                monthlySavedElement.textContent = `₹${saved.toFixed(2)}`;
+
                 if (budget > 0) {
                     if (total > budget) {
                         monthlyTotalElement.style.color = 'red';
+                        monthlySavedElement.style.color = 'red';
                     } else {
                         monthlyTotalElement.style.color = 'green';
+                        monthlySavedElement.style.color = 'green';
                     }
                 } else {
                     monthlyTotalElement.style.color = ''; // default
+                    monthlySavedElement.style.color = ''; // default
                 }
             } else {
                 monthlyTotalElement.style.color = ''; // default
+                monthlySavedElement.style.color = ''; // default
+                monthlySavedElement.textContent = '₹0.00';
             }
         }
 
